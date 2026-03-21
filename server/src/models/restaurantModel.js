@@ -1,24 +1,12 @@
 import mongoose from "mongoose";
 
 const restaurantSchema = new mongoose.Schema({
-  ownerName: {
-    type: String,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     required: true,
   },
-  resturantname: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  phone: {
+  restaurantName: {
     type: String,
     required: true,
   },
@@ -42,7 +30,7 @@ const restaurantSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  Geolocation: {
+  geolocation: {
     lat: {
       type: Number,
       required: true,
@@ -80,7 +68,7 @@ const restaurantSchema = new mongoose.Schema({
     type: Boolean,
     required: true,
   },
-  Licence: {
+  licence: {
     fssai: {
       type: String,
       required: true,
@@ -90,7 +78,7 @@ const restaurantSchema = new mongoose.Schema({
       required: true,
     },    
   },
-  BankingDetails: {
+  bankingDetails: {
     accountNumber: {
       type: String,
       required: true,
@@ -108,6 +96,17 @@ const restaurantSchema = new mongoose.Schema({
       required: true,
     },
   },
+  isProfileComplete: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+},
+{
+  timestamps: true,
 });
 
 const Restaurant = mongoose.model("Restaurant", restaurantSchema);
