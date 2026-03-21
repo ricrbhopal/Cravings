@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    role: {
+    userType: {
       type: String,
       enum: ["customer", "restaurant", "rider", "admin"],
       required: true,
@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
       },
       publicId: {
         type: String,
+        default: null,
       },
     },
   },

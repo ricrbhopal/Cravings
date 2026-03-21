@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import api from "../config/ApiConfig";
+import { useAuth } from "../context/authContext";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { setUser, setIsLogin, setRole } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -30,7 +36,7 @@ const Login = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validateForm(formData);
 
@@ -41,13 +47,34 @@ const Login = () => {
 
     setLoading(true);
     console.log("Login submitted:", formData);
-    
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const res = await api.post("/auth/login", formData);
+      toast.success(res.data.message);
+      sessionStorage.setItem("cravingUser", JSON.stringify(res.data.data));
+      setUser(res.data.data);
+      setIsLogin(true);
+      //console.log(res.data.data.userType);
+      setRole(res.data.data.userType);
+      if (res.data.data.userType === "customer") {
+        navigate("/customer-dashboard");
+      } else if (res.data.data.userType === "restaurant") {
+        navigate("/restaurant-dashboard");
+      } else if (res.data.data.userType === "rider") {
+        navigate("/rider-dashboard");
+      } else if (res.data.data.userType === "admin") {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Unknown error occurred during registration. Please try again.",
+      );
+    } finally {
       setLoading(false);
-      toast.success("Login successful! Welcome back.");
-      // Handle login here
-    }, 1000);
+    }
   };
 
   return (
@@ -110,9 +137,9 @@ const Login = () => {
                 className="absolute right-3 top-2.5 text-(--color-secondary) hover:text-(--color-primary) transition-colors"
               >
                 {showPassword ? (
-                  <span className="text-sm">Hide</span>
+                  <FaEyeSlash className="text-sm" />
                 ) : (
-                  <span className="text-sm">Show</span>
+                  <FaEye className="text-sm" />
                 )}
               </button>
             </div>
@@ -159,7 +186,9 @@ const Login = () => {
             <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
+            <span className="px-2 bg-white text-gray-500">
+              Don't have an account?
+            </span>
           </div>
         </div>
 

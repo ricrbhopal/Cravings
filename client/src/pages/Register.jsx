@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import api from "../config/ApiConfig";
 
 const Register = () => {
   const userType = useParams().userType; // Get userType from URL params (if needed)
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     userType: userType || "customer",
     fullName: "",
@@ -17,7 +18,6 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -52,17 +52,32 @@ const Register = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrors({});
+    setLoading(true);
     const validationErrors = validateForm(formData);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      setLoading(false);
       return;
     }
 
     console.log("Form submitted:", formData);
-    toast.success("Registration successful! Please login to continue.");
+
+    try {
+      const res = await api.post("/auth/register", formData);
+      toast.success(res.data.message);
+      navigate("/login");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Unknown error occurred during registration. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
     // Handle registration here
   };
 
@@ -159,7 +174,7 @@ const Register = () => {
               Phone Number
             </label>
             <input
-              type="tel"
+              type="number"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
@@ -207,7 +222,7 @@ const Register = () => {
               Confirm Password
             </label>
             <input
-              type="password"
+              type="text"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleInputChange}

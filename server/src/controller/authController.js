@@ -1,5 +1,29 @@
+import User from "../model/userModel.js";
+import bcrypt from "bcrypt";
+import generateToken from "../utils/generateToken.js";
+
 export const Register = async (req, res, next) => {
   try {
+    const { fullName, email, password, phone, userType } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      const error = new Error("Email already in use");
+      error.status = 400;
+      return next(error);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const PhotoURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&size=512`;
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+      phone,
+      userType,
+      photo: { url: PhotoURL },
+    });
+    await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     next(error);
@@ -8,7 +32,30 @@ export const Register = async (req, res, next) => {
 
 export const Login = async (req, res, next) => {
   try {
-    res.status(200).json({ message: "User logged in successfully" });
+    const { email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      const error = new Error("User not found");
+      error.status = 404;
+      return next(error);
+    }
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      existingUser.password,
+    );
+    if (!isPasswordValid) {
+      const error = new Error("Invalid password");
+      error.status = 401;
+      return next(error);
+    }
+
+    const existingUserObj = existingUser.toObject(); // Convert Mongoose document to plain object
+    delete existingUserObj.password; // Remove password from plain object
+
+    generateToken(existingUserObj, res);
+    res
+      .status(200)
+      .json({ message: "User logged in successfully", data: existingUserObj });
   } catch (error) {
     next(error);
   }
@@ -16,6 +63,12 @@ export const Login = async (req, res, next) => {
 
 export const Logout = async (req, res, next) => {
   try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 0,
+    });
     res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
     next(error);
