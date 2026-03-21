@@ -116,29 +116,29 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-700 my-8"></div>
+        <div className="border-t border(--color-neutral) my-8"></div>
 
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center">
           {/* Copyright */}
-          <p className="text-sm text-gray-400 mb-4 md:mb-0">
+          <p className="text-sm text-(--color-neutral-content) mb-4 md:mb-0">
             &copy; {currentYear} Cravings. All rights reserved.
           </p>
 
           {/* Legal Links */}
           <div className="flex gap-6">
             <Link to="/privacy-policy">
-              <span className="text-sm text-gray-400 hover:text-(--color-primary) transition-colors duration-200">
+              <span className="text-sm text-(--color-neutral-content) hover:text-(--color-primary) transition-colors duration-200">
                 Privacy Policy
               </span>
             </Link>
             <Link to="/terms-of-service">
-              <span className="text-sm text-gray-400 hover:text-(--color-primary) transition-colors duration-200">
+              <span className="text-sm text-(--color-neutral-content) hover:text-(--color-primary) transition-colors duration-200">
                 Terms of Service
               </span>
             </Link>
             <Link to="/site-map">
-              <span className="text-sm text-gray-400 hover:text-(--color-primary) transition-colors duration-200">
+              <span className="text-sm text-(--color-neutral-content) hover:text-(--color-primary) transition-colors duration-200">
                 Site Map
               </span>
             </Link>
