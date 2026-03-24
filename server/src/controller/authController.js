@@ -83,6 +83,14 @@ export const Profile = async (req, res, next) => {
   }
 };
 
+export const EditProfile = async (req, res, next) => {
+  try {
+    res.status(200).json({ message: "User profile updated successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ChangePassword = async (req, res, next) => {
   try {
     res.status(200).json({ message: "Password changed successfully" });
