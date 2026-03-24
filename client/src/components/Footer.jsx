@@ -1,11 +1,45 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import logoCircle from "../assets/circleLogo.png";
 
 const Footer = () => {
+  const location = useLocation().pathname;
   const currentYear = new Date().getFullYear();
   const navigate = useNavigate();
+
+  if (location.toLowerCase().includes("dashboard"))
+    return (
+      // <>
+      //   {/* Bottom Section */}
+      //   <div className="flex flex-col md:flex-row justify-between items-center text-(--color-neutral-content) bg-(--color-neutral) px-16 py-1.5">
+      //     {/* Copyright */}
+      //     <p className="text-sm  mb-4 md:mb-0">
+      //       &copy; {currentYear} Cravings. All rights reserved.
+      //     </p>
+
+      //     {/* Legal Links */}
+      //     <div className="flex gap-6">
+      //       <Link to="/privacy-policy">
+      //         <span className="text-sm hover:text-(--color-primary) transition-colors duration-200">
+      //           Privacy Policy
+      //         </span>
+      //       </Link>
+      //       <Link to="/terms-of-service">
+      //         <span className="text-sm hover:text-(--color-primary) transition-colors duration-200">
+      //           Terms of Service
+      //         </span>
+      //       </Link>
+      //       <Link to="/site-map">
+      //         <span className="text-sm hover:text-(--color-primary) transition-colors duration-200">
+      //           Site Map
+      //         </span>
+      //       </Link>
+      //     </div>
+      //   </div>
+      // </> 
+      null
+    );
 
   return (
     <footer className="bg-(--color-neutral) text-(--color-neutral-content) py-8">
