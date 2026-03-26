@@ -3,17 +3,20 @@ import api from "../../../config/ApiConfig";
 import toast from "react-hot-toast";
 import { FaCamera } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import ImageCropModal from "../../ImageCropModal";
 
 const MenuItemModal = ({ isOpen, onClose, onSuccess, editingItem }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
   const [formData, setFormData] = useState({
     itemName: "",
     description: "",
     price: "",
     foodType: "veg",
   });
-  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     if (editingItem) {
@@ -47,10 +50,25 @@ const MenuItemModal = ({ isOpen, onClose, onSuccess, editingItem }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedFile(file);
-      const preview = URL.createObjectURL(file);
-      setImagePreview(preview);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageToCrop(reader.result);
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedBlob) => {
+    const croppedFile = new File([croppedBlob], "cropped-image.jpg", {
+      type: "image/jpeg",
+    });
+    setSelectedFile(croppedFile);
+    const preview = URL.createObjectURL(croppedBlob);
+    setImagePreview(preview);
+    setShowCropModal(false);
+    setImageToCrop(null);
+    toast.success("Image cropped successfully!");
   };
 
   const handleSubmit = async () => {
@@ -103,7 +121,18 @@ const MenuItemModal = ({ isOpen, onClose, onSuccess, editingItem }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <>
+      <ImageCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          setImageToCrop(null);
+        }}
+        image={imageToCrop}
+        onCropComplete={handleCropComplete}
+        aspectRatio={1}
+      />
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-(--color-base-100) rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-(--color-base-200) p-6 border-b flex justify-between items-center">
@@ -247,6 +276,7 @@ const MenuItemModal = ({ isOpen, onClose, onSuccess, editingItem }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

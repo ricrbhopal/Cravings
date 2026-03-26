@@ -7,6 +7,7 @@ import api from "../../config/ApiConfig";
 import toast from "react-hot-toast";
 import AddRestaurantModal from "./modals/AddRestaurantModal";
 import EditRestaurantModal from "./modals/EditRestaurantModal";
+import ImageCropModal from "../ImageCropModal";
 
 const RestaurantSetting = () => {
   const { user, setUser } = useAuth();
@@ -35,6 +36,8 @@ const RestaurantSetting = () => {
   const [uploadCountdown, setUploadCountdown] = useState(0);
   const countdownIntervalRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
 
   // Update profileData when user changes
   useEffect(() => {
@@ -92,32 +95,43 @@ const RestaurantSetting = () => {
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-        setPhotoFile(file);
-        setUploadCountdown(5);
-
-        // Start countdown
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
-        }
-
-        countdownIntervalRef.current = setInterval(() => {
-          setUploadCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(countdownIntervalRef.current);
-              // Auto upload when countdown reaches 0
-              uploadProfilePhoto(file);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+        setImageToCrop(reader.result);
+        setShowCropModal(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedBlob) => {
+    const croppedFile = new File([croppedBlob], "cropped-image.jpg", {
+      type: "image/jpeg",
+    });
+    const preview = URL.createObjectURL(croppedBlob);
+    setPhotoPreview(preview);
+    setPhotoFile(croppedFile);
+    setUploadCountdown(5);
+
+    // Start countdown
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    countdownIntervalRef.current = setInterval(() => {
+      setUploadCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownIntervalRef.current);
+          // Auto upload when countdown reaches 0
+          uploadProfilePhoto(croppedFile);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setShowCropModal(false);
+    setImageToCrop(null);
   };
 
   const uploadProfilePhoto = async (file) => {
@@ -376,7 +390,18 @@ const RestaurantSetting = () => {
 
   // Restaurant Exists - Display Data
   return (
-    <div className="overflow-y-auto h-full p-6 space-y-6">
+    <>
+      <ImageCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          setImageToCrop(null);
+        }}
+        image={imageToCrop}
+        onCropComplete={handleCropComplete}
+        aspectRatio={1}
+      />
+      <div className="overflow-y-auto h-full p-6 space-y-6">
       {/* User Profile Section */}
       <div className="bg-(--color-base-200) rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
@@ -704,6 +729,7 @@ const RestaurantSetting = () => {
         restaurantData={restaurantData}
       />
     </div>
+    </>
   );
 };
 

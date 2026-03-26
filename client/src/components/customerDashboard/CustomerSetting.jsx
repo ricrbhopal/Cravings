@@ -6,6 +6,7 @@ import api from "../../config/ApiConfig";
 import toast from "react-hot-toast";
 import MapLocationPicker from "../MapLocationPicker";
 import AddressModal from "./modals/AddressModal";
+import ImageCropModal from "../ImageCropModal";
 
 const CustomerSetting = () => {
   const { user, setUser } = useAuth();
@@ -31,6 +32,8 @@ const CustomerSetting = () => {
   const [uploadCountdown, setUploadCountdown] = useState(0);
   const countdownIntervalRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
 
   // Address States
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -88,26 +91,38 @@ const CustomerSetting = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-        setUploadCountdown(5);
-
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
-        }
-
-        countdownIntervalRef.current = setInterval(() => {
-          setUploadCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(countdownIntervalRef.current);
-              uploadProfilePhoto(file);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+        setImageToCrop(reader.result);
+        setShowCropModal(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedBlob) => {
+    const croppedFile = new File([croppedBlob], "cropped-image.jpg", {
+      type: "image/jpeg",
+    });
+    const preview = URL.createObjectURL(croppedBlob);
+    setPhotoPreview(preview);
+    setUploadCountdown(5);
+
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    countdownIntervalRef.current = setInterval(() => {
+      setUploadCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownIntervalRef.current);
+          uploadProfilePhoto(croppedFile);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setShowCropModal(false);
+    setImageToCrop(null);
   };
 
   const uploadProfilePhoto = async (file) => {
@@ -274,7 +289,18 @@ const CustomerSetting = () => {
   }
 
   return (
-    <div className="overflow-y-auto h-full p-6 space-y-6">
+    <>
+      <ImageCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          setImageToCrop(null);
+        }}
+        image={imageToCrop}
+        onCropComplete={handleCropComplete}
+        aspectRatio={1}
+      />
+      <div className="overflow-y-auto h-full p-6 space-y-6">
       {/* User Profile Section */}
       <div className="bg-(--color-base-200) rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
@@ -530,6 +556,7 @@ const CustomerSetting = () => {
         isEditing={isEditingAddress}
       />
     </div>
+    </>
   );
 };
 

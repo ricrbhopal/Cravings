@@ -39,6 +39,7 @@ const MenuItemSchema = new mongoose.Schema(
             "jain",
             "gluten-free",
             "halal",
+            "dessert",
             "others",
           ],
           required: true,

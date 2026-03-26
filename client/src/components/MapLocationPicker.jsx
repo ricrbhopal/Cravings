@@ -8,17 +8,14 @@ import { IoAddCircleSharp, IoRemoveCircleSharp } from "react-icons/io5";
 
 // Fix marker icons
 import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import markerIconRetina from "leaflet/dist/images/marker-icon-2x.png";
 
 const defaultIcon = L.icon({
   iconUrl: markerIcon,
   iconRetinaUrl: markerIconRetina,
-  shadowUrl: markerShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowSize: [41, 41],
 });
 
 // Add smooth animation styles
@@ -65,9 +62,7 @@ const addStyles = () => {
       transition: transform 0.3s ease-out !important;
     }
 
-    .leaflet-marker-icon:hover {
-      filter: drop-shadow(0 0 8px rgba(66, 133, 244, 0.6));
-    }
+   
   `;
   document.head.appendChild(styleSheet);
 };
@@ -100,7 +95,7 @@ const MapLocationPicker = ({
       map.current = L.map(mapContainer.current, {
         animate: true,
         zoomAnimation: true,
-      }).setView([latitude, longitude], 13);
+      }).setView([latitude, longitude], 15);
 
       // Add OSM tiles
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -152,7 +147,7 @@ const MapLocationPicker = ({
     if (marker.current && isMapReady) {
       marker.current.setLatLng([latitude, longitude]);
       // Use flyTo for smooth animation instead of setView
-      map.current.flyTo([latitude, longitude], 13, {
+      map.current.flyTo([latitude, longitude], 15, {
         duration: 0.8,
         easeLinearity: 0.5,
       });
