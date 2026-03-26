@@ -7,6 +7,8 @@ import cloudinary from "./src/config/cloudinaryConfig.js";
 
 import authRouter from "./src/router/authRouter.js";
 import restaurantRouter from "./src/router/restaurantRouter.js";
+import customerRouter from "./src/router/customerRouter.js";
+import riderRouter from "./src/router/riderRouter.js";
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(morgan("dev"));
 
 app.use("/auth", authRouter);
 app.use("/restaurant", restaurantRouter);
+app.use("/customer", customerRouter);
+app.use("/rider", riderRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello, World!");

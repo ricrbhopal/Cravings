@@ -9,6 +9,14 @@ const customerSchema = new mongoose.Schema(
     },
     addressBook: [
       {
+        ReceiverName: {
+          type: String,
+          required: true,
+        },
+        ReceiverPhone: {
+          type: String,
+          required: true,
+        },
         address: {
           type: String,
           required: true,

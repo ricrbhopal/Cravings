@@ -1,79 +1,83 @@
 import React, { useState, useEffect } from "react";
-import { MdEdit, MdDelete, MdAdd } from "react-icons/md";
+import { MdEdit, MdAdd, MdDelete } from "react-icons/md";
+import { FaCamera } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../config/ApiConfig";
 import toast from "react-hot-toast";
+import MapLocationPicker from "../MapLocationPicker";
+import AddressModal from "./modals/AddressModal";
 
 const CustomerSetting = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+  const [customerData, setCustomerData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // User Profile States
   const [profileData, setProfileData] = useState({
     fullName: user?.fullName || "",
     email: user?.email || "",
     phone: user?.phone || "",
     photo: user?.photo?.url || "https://via.placeholder.com/150",
   });
-
-  const [addresses, setAddresses] = useState([]);
-  const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-
   const [formData, setFormData] = useState({
-    fullName: profileData.fullName,
-    email: profileData.email,
-    phone: profileData.phone,
+    fullName: user?.fullName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
   });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploadCountdown, setUploadCountdown] = useState(0);
+  const countdownIntervalRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
 
-  const [addressFormData, setAddressFormData] = useState({
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "",
-  });
+  // Address States
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
 
-  // Fetch addresses on component mount
+  // Update profileData when user changes
   useEffect(() => {
-    if (user?.id) {
-      fetchAddresses();
+    if (user) {
+      setProfileData({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        photo: user.photo?.url || "https://via.placeholder.com/150",
+      });
+      setFormData({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
     }
-  }, [user?.id]);
+  }, [user?.fullName, user?.email, user?.phone, user?.photo]);
 
-  // Update formData when profileData changes
   useEffect(() => {
-    setFormData({
-      fullName: profileData.fullName,
-      email: profileData.email,
-      phone: profileData.phone,
-    });
-  }, [profileData]);
+    if (user?._id) {
+      fetchCustomerData();
+    }
+  }, [user]);
 
-  const fetchAddresses = async () => {
+  const fetchCustomerData = async () => {
     try {
-      setLoadingAddresses(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/customer/addresses`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("cravingsToken")}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setAddresses(data.addresses || []);
+      setIsLoading(true);
+      const response = await api.get(`/customer/get-customer`);
+      setCustomerData(response.data.data);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setCustomerData(null);
       } else {
-        console.error("Failed to fetch addresses");
+        toast.error("Failed to fetch customer data");
       }
-    } catch (error) {
-      console.error("Error fetching addresses:", error);
-      toast.error("Failed to load addresses");
     } finally {
-      setLoadingAddresses(false);
+      setIsLoading(false);
     }
   };
 
+  // Profile handlers
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -84,427 +88,447 @@ const CustomerSetting = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileData({ ...profileData, photo: reader.result });
+        setPhotoPreview(reader.result);
+        setUploadCountdown(5);
+
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+
+        countdownIntervalRef.current = setInterval(() => {
+          setUploadCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(countdownIntervalRef.current);
+              uploadProfilePhoto(file);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const uploadProfilePhoto = async (file) => {
+    try {
+      setIsUploadingPhoto(true);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("photo", file);
+
+      const response = await api.put(
+        `/auth/update-profile-picture`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const updatedUser = response.data.data;
+      setProfileData({
+        ...profileData,
+        photo: updatedUser.photo.url,
+      });
+
+      setUser(updatedUser);
+      sessionStorage.setItem("cravingUser", JSON.stringify(updatedUser));
+
+      toast.success("Profile picture updated successfully!");
+      setPhotoPreview(null);
+      setUploadCountdown(0);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Failed to update profile picture",
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleCancelPhotoUpload = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    setPhotoPreview(null);
+    setUploadCountdown(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSaveProfile = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/user/profile`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cravingsToken")}`,
-          },
-          body: JSON.stringify({
-            fullName: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            photo: profileData.photo,
-          }),
-        }
-      );
+      setIsSavingProfile(true);
 
-      if (response.ok) {
-        setProfileData({ ...profileData, ...formData });
-        setEditingProfile(false);
-        toast.success("Profile updated successfully");
-      } else {
-        toast.error("Failed to update profile");
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Error updating profile");
+      const response = await api.put(`/auth/update-profile/`, {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+      });
+
+      const updatedUser = response.data.data;
+      setProfileData({
+        fullName: updatedUser.fullName || "",
+        email: updatedUser.email || "",
+        phone: updatedUser.phone || "",
+        photo: updatedUser.photo?.url || "https://via.placeholder.com/150",
+      });
+
+      setUser(updatedUser);
+      sessionStorage.setItem("cravingUser", JSON.stringify(updatedUser));
+
+      setEditingProfile(false);
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update profile");
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setAddressFormData({ ...addressFormData, [name]: value });
-  };
-
-  const handleAddAddress = async () => {
-    if (
-      !addressFormData.address ||
-      !addressFormData.city ||
-      !addressFormData.state ||
-      !addressFormData.zipCode ||
-      !addressFormData.country
-    ) {
-      toast.error("Please fill all address fields");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/customer/address`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cravingsToken")}`,
-          },
-          body: JSON.stringify(addressFormData),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setAddresses([...addresses, data.address]);
-        setAddressFormData({
-          address: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: "",
-        });
-        setShowAddressForm(false);
-        toast.success("Address added successfully");
-      } else {
-        toast.error("Failed to add address");
-      }
-    } catch (error) {
-      console.error("Error adding address:", error);
-      toast.error("Error adding address");
-    }
-  };
-
-  const handleEditAddress = (address) => {
-    setEditingAddress(address._id);
-    setAddressFormData(address);
-  };
-
-  const handleUpdateAddress = async () => {
-    if (
-      !addressFormData.address ||
-      !addressFormData.city ||
-      !addressFormData.state ||
-      !addressFormData.zipCode ||
-      !addressFormData.country
-    ) {
-      toast.error("Please fill all address fields");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/customer/address/${editingAddress}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("cravingsToken")}`,
-          },
-          body: JSON.stringify(addressFormData),
-        }
-      );
-
-      if (response.ok) {
-        setAddresses(
-          addresses.map((addr) =>
-            addr._id === editingAddress ? { ...addr, ...addressFormData } : addr
-          )
-        );
-        setEditingAddress(null);
-        setAddressFormData({
-          address: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          country: "",
-        });
-        toast.success("Address updated successfully");
-      } else {
-        toast.error("Failed to update address");
-      }
-    } catch (error) {
-      console.error("Error updating address:", error);
-      toast.error("Error updating address");
-    }
-  };
-
-  const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/customer/address/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("cravingsToken")}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        setAddresses(addresses.filter((addr) => addr._id !== id));
-        toast.success("Address deleted successfully");
-      } else {
-        toast.error("Failed to delete address");
-      }
-    } catch (error) {
-      console.error("Error deleting address:", error);
-      toast.error("Error deleting address");
-    }
-  };
-
-  const handleCancelAddressForm = () => {
-    setShowAddressForm(false);
-    setEditingAddress(null);
-    setAddressFormData({
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "",
+  const handleCancelProfile = () => {
+    setFormData({
+      fullName: profileData.fullName,
+      email: profileData.email,
+      phone: profileData.phone,
     });
+    setEditingProfile(false);
   };
+
+  // Address handlers
+  const handleAddAddress = async (addressData) => {
+    try {
+      const response = await api.post(`/customer/add-address`, addressData);
+      setCustomerData(response.data.data);
+      setShowAddressModal(false);
+      toast.success("Address added successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to add address");
+    }
+  };
+
+  const handleEditAddress = async (addressData) => {
+    try {
+      if (!selectedAddress?._id) {
+        toast.error("Address ID not found");
+        return;
+      }
+      const response = await api.put(
+        `/customer/update-address/${selectedAddress._id}`,
+        addressData,
+      );
+      setCustomerData(response.data.data);
+      setShowAddressModal(false);
+      setIsEditingAddress(false);
+      setSelectedAddress(null);
+      toast.success("Address updated successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update address");
+    }
+  };
+
+  const handleOpenAddModal = () => {
+    setIsEditingAddress(false);
+    setSelectedAddress(null);
+    setShowAddressModal(true);
+  };
+
+  const handleOpenEditModal = (address) => {
+    setIsEditingAddress(true);
+    setSelectedAddress(address);
+    setShowAddressModal(true);
+  };
+
+  const handleCloseAddressModal = () => {
+    setShowAddressModal(false);
+    setIsEditingAddress(false);
+    setSelectedAddress(null);
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    try {
+      if (window.confirm("Are you sure you want to delete this address?")) {
+        const response = await api.delete(
+          `/customer/delete-address/${addressId}`,
+        );
+        setCustomerData(response.data.data);
+        toast.success("Address deleted successfully!");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete address");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <p className="text-(--color-neutral)">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="overflow-y-auto h-full space-y-6">
-      <h2 className="text-2xl font-bold">Settings</h2>
-
-      {/* Profile Section */}
-      <div className="bg-(--color-base-200) p-6 rounded-lg shadow-md">
+    <div className="overflow-y-auto h-full p-6 space-y-6">
+      {/* User Profile Section */}
+      <div className="bg-(--color-base-200) rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Profile Information</h3>
-          <button
-            onClick={() => setEditingProfile(!editingProfile)}
-            className="flex items-center gap-2 bg-(--color-primary) text-(--color-primary-content) px-3 py-1 rounded text-sm"
-          >
-            <MdEdit /> {editingProfile ? "Cancel" : "Edit"}
-          </button>
+          <h3 className="text-lg font-semibold">Profile Information</h3>
+          {!editingProfile && (
+            <button
+              onClick={() => setEditingProfile(true)}
+              className="flex items-center gap-2 bg-(--color-primary) text-(--color-primary-content) px-3 py-1 rounded text-sm"
+            >
+              <MdEdit /> Edit
+            </button>
+          )}
         </div>
 
         {!editingProfile ? (
-          // Display Mode
           <div>
-            <div className="flex items-center gap-6 mb-6">
-              <img
-                src={profileData.photo}
-                alt="Profile"
-                className="w-48 h-48 rounded-full object-cover border-2 border-(--color-primary)"
-              />
-              <div>
-                <p className="text-sm text-(--color-neutral) mb-1">Name</p>
-                <p className="font-semibold mb-3">{profileData.fullName}</p>
-                <p className="text-sm text-(--color-neutral) mb-1">Email</p>
-                <p className="font-semibold mb-3">{profileData.email}</p>
-                <p className="text-sm text-(--color-neutral) mb-1">Phone</p>
-                <p className="font-semibold">{profileData.phone}</p>
+            {photoPreview && (
+              <div className="mb-6 bg-(--color-base-100) rounded-lg p-6 border-2 border-(--color-primary)">
+                <h4 className="text-sm font-semibold mb-3">
+                  Photo Preview (Uploading in {uploadCountdown}s)
+                </h4>
+                <div className="flex items-center gap-6">
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="w-32 h-32 rounded-full object-cover border-2 border-(--color-primary)"
+                  />
+                  <div className="flex flex-col gap-3">
+                    <div className="w-80 bg-(--color-base-200) rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-(--color-primary) h-full transition-all duration-100"
+                        style={{ width: `${(uploadCountdown / 5) * 100}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-sm text-(--color-neutral)">
+                      {uploadCountdown > 0
+                        ? `Uploading in ${uploadCountdown} seconds...`
+                        : "Uploading..."}
+                    </p>
+                    <button
+                      onClick={handleCancelPhotoUpload}
+                      className="bg-(--color-error) text-(--color-error-content) px-4 py-2 rounded font-semibold w-fit disabled:opacity-50"
+                      disabled={isUploadingPhoto || uploadCountdown === 0}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <img
+                  src={profileData.photo}
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full object-cover border-2 border-(--color-primary)"
+                />
+                <label
+                  htmlFor="dpChange"
+                  className="absolute bottom-0 right-0 bg-(--color-base-100) p-2 border rounded-full cursor-pointer group"
+                >
+                  <FaCamera className="text-(--color-primary) group-hover:scale-110 transition-transform" />
+                </label>
+                <input
+                  type="file"
+                  name="photo"
+                  id="dpChange"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="hidden"
+                  disabled={isUploadingPhoto || uploadCountdown > 0}
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-(--color-neutral)">Name</p>
+                  <p className="font-semibold">{profileData.fullName}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-(--color-neutral)">Email</p>
+                  <p className="font-semibold">{profileData.email}</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-(--color-neutral)">Phone</p>
+                  <p className="font-semibold">{profileData.phone}</p>
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          // Edit Mode
-          <div className="space-y-4">
-            <div> 
-              <label className="block text-sm font-semibold mb-2">
-                Profile Picture
+          <div className="flex items-start gap-6">
+            <div className="relative w-36 h-36 shrink-0">
+              <img
+                src={profileData.photo}
+                alt="Profile"
+                className="w-36 h-36 rounded-full object-cover border-2 border-(--color-primary)"
+              />
+              <label
+                htmlFor="dpChange"
+                className="absolute bottom-1 right-1 bg-(--color-base-100) p-2 border rounded-full cursor-pointer group"
+              >
+                <FaCamera className="text-(--color-primary) group-hover:scale-110 transition-transform" />
               </label>
-              <div className="flex items-center gap-4">
-                <img
-                  src={profileData.photo}
-                  alt="Profile"
-                  className="w-20 h-20 rounded-full object-cover border-2 border-(--color-primary)"
-                />
+              <input
+                type="file"
+                name="photo"
+                id="dpChange"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleProfileImageChange}
+                className="hidden"
+                disabled={isUploadingPhoto || uploadCountdown > 0}
+              />
+            </div>
+
+            <div className="space-y-4 w-full">
+              <div className="grid grid-cols-5 gap-2">
+                <label className="block text-sm font-semibold mb-2">
+                  Full Name
+                </label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                  className="flex-1 px-3 py-2 border border-(--color-secondary) rounded"
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded col-span-4"
+                />
+
+                <label className="block text-sm font-semibold mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded col-span-4"
+                />
+
+                <label className="block text-sm font-semibold mb-2">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleProfileChange}
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded col-span-4"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded"
-              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={handleSaveProfile}
+                  className="bg-(--color-primary) text-(--color-primary-content) px-6 py-2 rounded font-semibold disabled:opacity-50"
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={handleCancelProfile}
+                  className="bg-(--color-secondary) text-(--color-secondary-content) px-6 py-2 rounded font-semibold"
+                  disabled={isSavingProfile}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-2">Phone</label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleProfileChange}
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded"
-              />
-            </div>
-
-            <button
-              onClick={handleSaveProfile}
-              className="bg-(--color-primary) text-(--color-primary-content) px-6 py-2 rounded font-semibold"
-            >
-              Save Changes
-            </button>
           </div>
         )}
       </div>
 
       {/* Address Book Section */}
-      <div className="bg-(--color-base-200) p-6 rounded-lg shadow-md">
+      <div className="bg-(--color-base-200) rounded-lg p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Address Book</h3>
-          {!showAddressForm && editingAddress === null && (
+          <h3 className="text-lg font-semibold">Address Book</h3>
+          {customerData?.addressBook?.length > 0 && (
             <button
-              onClick={() => setShowAddressForm(true)}
-              className="flex items-center gap-2 bg-(--color-primary) text-(--color-primary-content) px-3 py-1 rounded text-sm"
+              onClick={handleOpenAddModal}
+              className="flex items-center gap-2 bg-(--color-primary) text-(--color-primary-content) px-4 py-2 rounded hover:opacity-90 transition"
             >
               <MdAdd /> Add Address
             </button>
           )}
         </div>
 
-        {/* Address Form */}
-        {(showAddressForm || editingAddress !== null) && (
-          <div className="bg-(--color-base-100) p-4 rounded mb-4 space-y-3">
-            <input
-              type="text"
-              name="address"
-              placeholder="Street Address"
-              value={addressFormData.address}
-              onChange={handleAddressChange}
-              className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                name="city"
-                placeholder="City"
-                value={addressFormData.city}
-                onChange={handleAddressChange}
-                className="px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-              <input
-                type="text"
-                name="state"
-                placeholder="State"
-                value={addressFormData.state}
-                onChange={handleAddressChange}
-                className="px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="text"
-                name="zipCode"
-                placeholder="Zip Code"
-                value={addressFormData.zipCode}
-                onChange={handleAddressChange}
-                className="px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-              <input
-                type="text"
-                name="country"
-                placeholder="Country"
-                value={addressFormData.country}
-                onChange={handleAddressChange}
-                className="px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={
-                  editingAddress !== null
-                    ? handleUpdateAddress
-                    : handleAddAddress
-                }
-                className="bg-(--color-primary) text-(--color-primary-content) px-4 py-2 rounded text-sm font-semibold"
-              >
-                {editingAddress !== null ? "Update" : "Add"} Address
-              </button>
-              <button
-                onClick={handleCancelAddressForm}
-                className="bg-(--color-secondary) text-(--color-secondary-content) px-4 py-2 rounded text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Addresses List */}
-        <div className="space-y-3">
-          {loadingAddresses ? (
-            <p className="text-(--color-neutral) text-sm">Loading addresses...</p>
-          ) : addresses.length > 0 ? (
-            addresses.map((address) => (
+        {customerData?.addressBook && customerData.addressBook.length > 0 ? (
+          <div className="space-y-3">
+            {customerData.addressBook.map((address) => (
               <div
                 key={address._id}
-                className="bg-(--color-base-100) p-3 rounded flex justify-between items-start"
+                className="bg-(--color-base-100) rounded-lg p-4 flex justify-between items-start hover:shadow-md transition"
               >
-                <div className="text-sm">
+                <div className="flex-1">
+                  <div className="mb-3 pb-3 border-b border-(--color-secondary)">
+                    <p className="font-semibold text-(--color-primary)">
+                      {address.ReceiverName}
+                    </p>
+                    <p className="text-sm text-(--color-neutral)">
+                      {address.ReceiverPhone}
+                    </p>
+                  </div>
                   <p className="font-semibold">{address.address}</p>
-                  <p className="text-(--color-neutral)">
+                  <p className="text-sm text-(--color-neutral)">
                     {address.city}, {address.state} {address.zipCode}
                   </p>
-                  <p className="text-(--color-neutral)">{address.country}</p>
+                  <p className="text-sm text-(--color-neutral)">
+                    {address.country}
+                  </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => handleEditAddress(address)}
-                    className="text-(--color-primary) hover:bg-(--color-base-200) p-2 rounded"
+                    onClick={() => handleOpenEditModal(address)}
+                    className="text-(--color-primary) hover:bg-(--color-base-200) p-2 rounded transition"
+                    title="Edit Address"
                   >
-                    <MdEdit size={18} />
+                    <MdEdit size={20} />
                   </button>
                   <button
                     onClick={() => handleDeleteAddress(address._id)}
-                    className="text-red-500 hover:bg-(--color-base-200) p-2 rounded"
+                    className="text-(--color-error) hover:bg-(--color-base-200) p-2 rounded transition"
+                    title="Delete Address"
                   >
-                    <MdDelete size={18} />
+                    <MdDelete size={20} />
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="text-(--color-neutral) text-sm">
-              No saved addresses yet
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-(--color-neutral) mb-4">
+              No addresses added yet
             </p>
-          )}
-        </div>
+            <button
+              onClick={handleOpenAddModal}
+              className="bg-(--color-primary) text-(--color-primary-content) px-6 py-2 rounded font-semibold hover:opacity-90 transition"
+            >
+              Add Your First Address
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Account Status Section */}
-      <div className="bg-(--color-base-200) p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold mb-4">Account Status</h3>
-        <div className="space-y-3">
-          <div className="bg-(--color-base-100) p-3 rounded">
-            <p className="text-sm text-(--color-neutral)">Status</p>
-            <p className="font-semibold">✅ Active</p>
-          </div>
-          <button className="bg-red-500 text-white px-4 py-2 rounded font-semibold hover:bg-red-600">
-            Deactivate Account
-          </button>
-        </div>
-      </div>
+      {/* Address Modal */}
+      <AddressModal
+        isOpen={showAddressModal}
+        onClose={handleCloseAddressModal}
+        onSave={isEditingAddress ? handleEditAddress : handleAddAddress}
+        initialData={selectedAddress}
+        user={user}
+        isEditing={isEditingAddress}
+      />
     </div>
   );
 };
