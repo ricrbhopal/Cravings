@@ -6,6 +6,7 @@ import {
   updateVehicleDetails,
   updateBankingDetails,
   updateAvailability,
+  updateLocation,
 } from "../controller/riderController.js";
 import { Protect, riderMiddleware } from "../middleware/authMiddleware.js";
 
@@ -31,6 +32,12 @@ router.put(
   Protect,
   riderMiddleware,
   updateAvailability,
+);
+router.put(
+  "/update-location",
+  Protect,
+  riderMiddleware,
+  updateLocation,
 );
 
 export default router;

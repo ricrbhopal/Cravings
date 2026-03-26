@@ -3,6 +3,8 @@ import { useAuth } from "../../../context/AuthContext";
 import api from "../../../config/ApiConfig";
 import toast from "react-hot-toast";
 import { FaCamera } from "react-icons/fa";
+import MapLocationPicker from "../../MapLocationPicker";
+import { FaMapLocationDot } from "react-icons/fa6";
 
 const EditRestaurantModal = ({
   isOpen,
@@ -12,6 +14,7 @@ const EditRestaurantModal = ({
 }) => {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [editData, setEditData] = useState(null);
 
   useEffect(() => {
@@ -57,6 +60,15 @@ const EditRestaurantModal = ({
       ...editData,
       images: editData.images.filter((_, i) => i !== index),
     });
+  };
+
+  const handleLocationSelect = (location) => {
+    setEditData({
+      ...editData,
+      geolocation: { lat: location.lat, lng: location.lng },
+    });
+    setShowMap(false);
+    toast.success("Location updated successfully!");
   };
 
   const handleSubmit = async () => {
@@ -170,44 +182,111 @@ const EditRestaurantModal = ({
               className="w-full px-3 py-2 border border-(--color-secondary) rounded"
             />
             <div className="grid grid-cols-3 gap-3">
-              <input
-                type="text"
-                name="city"
-                value={editData.city || ""}
-                onChange={handleChange}
-                placeholder="City"
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-              <input
-                type="text"
-                name="state"
-                value={editData.state || ""}
-                onChange={handleChange}
-                placeholder="State"
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
-              <input
-                type="text"
-                name="zipCode"
-                value={editData.zipCode || ""}
-                onChange={handleChange}
-                placeholder="Zip Code"
-                className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
-              />
+              <div>
+                <label className="text-sm font-semibold mb-1 block">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={editData.city || ""}
+                  onChange={handleChange}
+                  placeholder="City"
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">
+                  State
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={editData.state || ""}
+                  onChange={handleChange}
+                  placeholder="State"
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">
+                  Zip Code
+                </label>
+                <input
+                  type="text"
+                  name="zipCode"
+                  value={editData.zipCode || ""}
+                  onChange={handleChange}
+                  placeholder="Zip Code"
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  name="country"
+                  value={editData.country || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">
+                  Lattitude
+                </label>
+                <input
+                  type="text"
+                  name="lat"
+                  value={editData.geolocation?.lat || ""}
+                  placeholder="Latitude"
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">
+                  Longitude
+                </label>
+                <input
+                  type="text"
+                  name="lng"
+                  value={editData.geolocation?.lng || ""}
+                  placeholder="Longitude"
+                  className="w-full px-3 py-2 border border-(--color-secondary) rounded"
+                  disabled
+                />
+              </div>
             </div>
-            <input
-              type="text"
-              name="country"
-              value={editData.country || ""}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-(--color-secondary) rounded"
-            />
+          </div>
+
+          {/* Geolocation */}
+          <div className="space-y-3 flex items-center gap-5">
+            <h3 className="font-semibold text-lg">Restaurant Location</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-(--color-primary) text-xs text-(--color-primary-content) rounded font-semibold hover:opacity-90"
+              >
+                <FaMapLocationDot className="text-(--color-primary-content)" />{" "}
+                Update Location From Map
+              </button>
+            </div>
+            {showMap && (
+              <MapLocationPicker
+                onLocationSelect={handleLocationSelect}
+                onClose={() => setShowMap(false)}
+                initialLat={editData.geolocation?.lat || 20.5937}
+                initialLng={editData.geolocation?.lng || 78.9629}
+              />
+            )}
           </div>
 
           {/* Operating Hours */}
           <div className="space-y-3">
             <h3 className="font-semibold text-lg">Operating Hours</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-semibold mb-1 block">
                   Opening Time

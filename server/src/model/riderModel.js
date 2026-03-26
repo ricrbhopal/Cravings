@@ -21,6 +21,14 @@ const riderSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    currentLocation: {
+      lat: {
+        type: Number,
+      },
+      lng: {
+        type: Number,
+      },
+    },
     ratings: [
       {
         customerId: {

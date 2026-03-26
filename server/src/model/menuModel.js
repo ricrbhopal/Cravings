@@ -22,17 +22,34 @@ const MenuItemSchema = new mongoose.Schema(
           required: true,
         },
         image: {
-          type: String,
-          required: true,
+          url: {
+            type: String,
+          },
+          publicId: {
+            type: String,
+          },
         },
         foodType: {
           type: String,
-          enum: ["veg", "nonveg", "egg", "vegan"],
+          enum: [
+            "veg",
+            "nonveg",
+            "egg",
+            "vegan",
+            "jain",
+            "gluten-free",
+            "halal",
+            "others",
+          ],
           required: true,
         },
         isAvailable: {
           type: Boolean,
           default: true,
+        },
+        isDiscontinued: {
+          type: Boolean,
+          default: false,
         },
         ratings: [
           {

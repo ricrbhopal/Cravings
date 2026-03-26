@@ -5,6 +5,10 @@
   box-sizing: border-box;
 }
 
+button {
+  cursor: pointer;
+}
+
 :root {
   /* Primary */
   --color-primary: #c2410c;

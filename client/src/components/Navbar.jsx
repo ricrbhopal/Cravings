@@ -63,9 +63,15 @@ const Navbar = () => {
               <img
                 src={user?.photo?.url}
                 alt={user?.fullName}
-                className="w-8 h-8 rounded-full object-cover object-top"
+                className="w-12 h-12 rounded-full object-cover object-top"
               />
-              <span className="text-base">{user?.fullName}</span>
+              <div className="flex flex-col items-start">
+                <span className="text-base">{user?.fullName}</span>
+                <span className="text-xs text-(--color-primary-content)/80">
+                  {user?.userType.charAt(0).toUpperCase() +
+                    user?.userType.slice(1)}
+                </span>
+              </div>
             </button>
             <button
               onClick={handleLogout}

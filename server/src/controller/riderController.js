@@ -71,9 +71,24 @@ export const updateRider = async (req, res, next) => {
     if (typeof updates.bankingDetails === 'string') {
       updates.bankingDetails = JSON.parse(updates.bankingDetails);
     }
+    if (typeof updates.currentLocation === 'string') {
+      try {
+        updates.currentLocation = JSON.parse(updates.currentLocation);
+      } catch (parseError) {
+        console.error("Error parsing currentLocation:", parseError);
+      }
+    }
+
+    // Ensure currentLocation has proper lat/lng values as numbers if provided
+    if (updates.currentLocation) {
+      updates.currentLocation = {
+        lat: parseFloat(updates.currentLocation.lat),
+        lng: parseFloat(updates.currentLocation.lng),
+      };
+    }
 
     const rider = await Rider.findOneAndUpdate({ userId }, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
 
@@ -156,7 +171,7 @@ export const updateAvailability = async (req, res, next) => {
     const rider = await Rider.findOneAndUpdate(
       { userId },
       { isAvailable },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!rider) {
@@ -167,6 +182,44 @@ export const updateAvailability = async (req, res, next) => {
 
     res.status(200).json({
       message: "Availability updated successfully",
+      data: rider,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateLocation = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { lat, lng } = req.body;
+
+    // Validate location data
+    if (lat === undefined || lng === undefined) {
+      const error = new Error("Latitude and longitude are required");
+      error.status = 400;
+      return next(error);
+    }
+
+    const rider = await Rider.findOneAndUpdate(
+      { userId },
+      {
+        currentLocation: {
+          lat: parseFloat(lat),
+          lng: parseFloat(lng),
+        }
+      },
+      { returnDocument: 'after' }
+    );
+
+    if (!rider) {
+      const error = new Error("Rider profile not found");
+      error.status = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      message: "Location updated successfully",
       data: rider,
     });
   } catch (error) {

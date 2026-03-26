@@ -67,11 +67,23 @@ export const updateCustomer = async (req, res, next) => {
 
     // Parse nested JSON strings if they exist
     if (typeof updates.geolocation === 'string') {
-      updates.geolocation = JSON.parse(updates.geolocation);
+      try {
+        updates.geolocation = JSON.parse(updates.geolocation);
+      } catch (parseError) {
+        console.error("Error parsing geolocation:", parseError);
+      }
+    }
+    
+    // Ensure geolocation has proper lat/lng values as numbers
+    if (updates.geolocation) {
+      updates.geolocation = {
+        lat: parseFloat(updates.geolocation.lat),
+        lng: parseFloat(updates.geolocation.lng),
+      };
     }
 
     const customer = await Customer.findOneAndUpdate({ userId }, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
 

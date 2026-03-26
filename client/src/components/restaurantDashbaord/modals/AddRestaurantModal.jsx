@@ -3,10 +3,12 @@ import { useAuth } from "../../../context/AuthContext";
 import api from "../../../config/ApiConfig";
 import toast from "react-hot-toast";
 import { FaCamera } from "react-icons/fa";
+import MapLocationPicker from "../../MapLocationPicker";
 
 const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     email: user?.email || "",
@@ -63,6 +65,15 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
       ...formData,
       images: formData.images.filter((_, i) => i !== index),
     });
+  };
+
+  const handleLocationSelect = (location) => {
+    setFormData({
+      ...formData,
+      geolocation: { lat: location.lat, lng: location.lng },
+    });
+    setShowMap(false);
+    toast.success("Location selected successfully!");
   };
 
   const handleSubmit = async () => {
@@ -236,6 +247,33 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
               placeholder="Country"
               className="w-full px-3 py-2 border border-(--color-secondary) rounded"
             />
+          </div>
+
+          {/* Geolocation */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-lg">Restaurant Location</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="px-4 py-2 bg-(--color-primary) text-(--color-primary-content) rounded font-semibold hover:opacity-90"
+              >
+                Pick Location on Map
+              </button>
+              {formData.geolocation.lat !== 0 && formData.geolocation.lng !== 0 && (
+                <span className="text-sm text-(--color-secondary)">
+                  Selected: ({formData.geolocation.lat.toFixed(4)}, {formData.geolocation.lng.toFixed(4)})
+                </span>
+              )}
+            </div>
+            {showMap && (
+              <MapLocationPicker
+                onLocationSelect={handleLocationSelect}
+                onClose={() => setShowMap(false)}
+                initialLat={formData.geolocation.lat || 20.5937}
+                initialLng={formData.geolocation.lng || 78.9629}
+              />
+            )}
           </div>
 
           {/* Operating Hours */}

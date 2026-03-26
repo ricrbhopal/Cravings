@@ -12,8 +12,24 @@ export const createRestaurant = async (req, res, next) => {
 
     // Parse nested JSON strings if they exist (from FormData submission)
     if (typeof restaurantData.geolocation === 'string') {
-      restaurantData.geolocation = JSON.parse(restaurantData.geolocation);
+      try {
+        restaurantData.geolocation = JSON.parse(restaurantData.geolocation);
+      } catch (parseError) {
+        console.error("Error parsing geolocation:", parseError);
+        const error = new Error("Invalid geolocation format");
+        error.status = 400;
+        return next(error);
+      }
     }
+    
+    // Ensure geolocation has proper lat/lng values as numbers
+    if (restaurantData.geolocation) {
+      restaurantData.geolocation = {
+        lat: parseFloat(restaurantData.geolocation.lat),
+        lng: parseFloat(restaurantData.geolocation.lng),
+      };
+    }
+    
     if (typeof restaurantData.licence === 'string') {
       restaurantData.licence = JSON.parse(restaurantData.licence);
     }
@@ -89,8 +105,24 @@ export const updateRestaurant = async (req, res, next) => {
 
     // Parse nested JSON strings if they exist (from FormData submission)
     if (typeof updates.geolocation === 'string') {
-      updates.geolocation = JSON.parse(updates.geolocation);
+      try {
+        updates.geolocation = JSON.parse(updates.geolocation);
+      } catch (parseError) {
+        console.error("Error parsing geolocation:", parseError);
+        const error = new Error("Invalid geolocation format");
+        error.status = 400;
+        return next(error);
+      }
     }
+    
+    // Ensure geolocation has proper lat/lng values as numbers
+    if (updates.geolocation) {
+      updates.geolocation = {
+        lat: parseFloat(updates.geolocation.lat),
+        lng: parseFloat(updates.geolocation.lng),
+      };
+    }
+    
     if (typeof updates.licence === 'string') {
       updates.licence = JSON.parse(updates.licence);
     }
@@ -132,7 +164,7 @@ export const updateRestaurant = async (req, res, next) => {
 
     // Update restaurant
     const updatedRestaurant = await Restaurant.findOneAndUpdate({ userId }, updates, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
 

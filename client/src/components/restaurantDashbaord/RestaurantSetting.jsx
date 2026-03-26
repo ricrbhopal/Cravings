@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MdEdit, MdAdd } from "react-icons/md";
 import { FaCamera } from "react-icons/fa";
+import { FaMapLocationDot } from "react-icons/fa6";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../config/ApiConfig";
 import toast from "react-hot-toast";
@@ -585,46 +586,44 @@ const RestaurantSetting = () => {
 
         {/* Address Information */}
         <div className="bg-(--color-base-200) rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4">Address</h3>
-          <div className="bg-(--color-base-100) p-4 rounded space-y-3">
-            <p>
-              <span className="text-sm text-(--color-neutral)">Street: </span>
-              <span className="font-semibold">{restaurantData.address}</span>
-            </p>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-(--color-neutral)">City</p>
-                <p className="font-semibold">{restaurantData.city}</p>
-              </div>
-              <div>
-                <p className="text-sm text-(--color-neutral)">State</p>
-                <p className="font-semibold">{restaurantData.state}</p>
-              </div>
-              <div>
-                <p className="text-sm text-(--color-neutral)">Zip Code</p>
-                <p className="font-semibold">{restaurantData.zipCode}</p>
-              </div>
+          <div className="bg-(--color-base-100) p-2 rounded flex items-center mb-4 gap-5">
+            <p className="text-lg font-semibold">Address: </p>
+            <p>{restaurantData.address}</p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-(--color-base-100) p-3 rounded">
+              <p className="text-sm text-(--color-neutral)">City</p>
+              <p className="font-semibold">{restaurantData.city}</p>
             </div>
-            <p>
-              <span className="text-sm text-(--color-neutral)">Country: </span>
-              <span className="font-semibold">{restaurantData.country}</span>
-            </p>
+            <div className="bg-(--color-base-100) p-3 rounded">
+              <p className="text-sm text-(--color-neutral)">State</p>
+              <p className="font-semibold">{restaurantData.state}</p>
+            </div>
+            <div className="bg-(--color-base-100) p-3 rounded">
+              <p className="text-sm text-(--color-neutral)">Zip Code</p>
+              <p className="font-semibold">{restaurantData.zipCode}</p>
+            </div>
+            <div className="bg-(--color-base-100) p-3 rounded">
+              <p className="text-sm text-(--color-neutral)">Country</p>
+              <p className="font-semibold">{restaurantData.country}</p>
+            </div>
           </div>
         </div>
 
         {/* Operating Hours */}
         <div className="bg-(--color-base-200) rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Operating Hours</h3>
-          <div className="bg-(--color-base-100) p-4 rounded grid grid-cols-3 gap-4">
-            <div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">Opening</p>
               <p className="font-semibold">{restaurantData.openingHours}</p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">Closing</p>
               <p className="font-semibold">{restaurantData.closingHours}</p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">Status</p>
               <p className="font-semibold">
                 {restaurantData.isOpen ? "✅ Open" : "❌ Closed"}
@@ -636,12 +635,12 @@ const RestaurantSetting = () => {
         {/* License Information */}
         <div className="bg-(--color-base-200) rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">License Information</h3>
-          <div className="bg-(--color-base-100) p-4 rounded grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">FSSAI</p>
               <p className="font-semibold">{restaurantData.licence?.fssai}</p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">GST Number</p>
               <p className="font-semibold">{restaurantData.licence?.GST}</p>
             </div>
@@ -651,26 +650,26 @@ const RestaurantSetting = () => {
         {/* Banking Details */}
         <div className="bg-(--color-base-200) rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Banking Details</h3>
-          <div className="bg-(--color-base-100) p-4 rounded grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">Bank Name</p>
               <p className="font-semibold">
                 {restaurantData.bankingDetails?.bankName}
               </p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">Account</p>
               <p className="font-semibold">
                 {restaurantData.bankingDetails?.accountNumber}
               </p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">IFSC</p>
               <p className="font-semibold">
                 {restaurantData.bankingDetails?.IFSC}
               </p>
             </div>
-            <div>
+            <div className="bg-(--color-base-100) p-3 rounded">
               <p className="text-sm text-(--color-neutral)">UPI</p>
               <p className="font-semibold">
                 {restaurantData.bankingDetails?.UPI}
