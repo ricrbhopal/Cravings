@@ -3,6 +3,7 @@ import api from "../../config/ApiConfig";
 import toast from "react-hot-toast";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { MdCheckCircle, MdCancel } from "react-icons/md";
+import { FaArrowRotateLeft } from "react-icons/fa6";
 import MenuItemModal from "./modals/MenuItemModal";
 
 const RestaurantMenu = () => {
@@ -40,14 +41,34 @@ const RestaurantMenu = () => {
     setShowModal(true);
   };
 
-  const handleDeleteItem = async (itemId) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
+  const handleDeleteItem = async (itemId, currentStatus) => {
+    const action = currentStatus ? "reactivate" : "discontinue";
+    if (
+      window.confirm(
+        `Are you sure you want to ${action} this item?`,
+      )
+    ) {
       try {
-        await api.delete(`/menu/delete-item/${itemId}`);
-        toast.success("Item deleted successfully");
+        const updateData = {
+          isDiscontinued: !currentStatus,
+        };
+        
+        // If discontinuing, also set isAvailable to false
+        if (!currentStatus) {
+          await api.patch(`/menu/mark-unavailable/${itemId}`, {
+            isAvailable: false,
+          });
+        }
+
+        await api.patch(`/menu/mark-discontinued/${itemId}`, updateData);
+        toast.success(
+          `Item ${action}d successfully`,
+        );
         fetchMenuItems();
       } catch (error) {
-        toast.error(error.response?.data?.message || "Failed to delete item");
+        toast.error(
+          error.response?.data?.message || `Failed to ${action} item`,
+        );
       }
     }
   };
@@ -66,20 +87,6 @@ const RestaurantMenu = () => {
     }
   };
 
-  const handleToggleDiscontinued = async (itemId, currentStatus) => {
-    try {
-      await api.patch(`/menu/mark-discontinued/${itemId}`, {
-        isDiscontinued: !currentStatus,
-      });
-      toast.success(
-        `Item marked ${!currentStatus ? "discontinued" : "active"}`,
-      );
-      fetchMenuItems();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update status");
-    }
-  };
-
   const handleModalClose = () => {
     setShowModal(false);
     setEditingItem(null);
@@ -91,11 +98,13 @@ const RestaurantMenu = () => {
   };
 
   const filteredItems = menuItems.filter((item) => {
-    if (filterStatus === "all") return true;
+    if (filterStatus === "all") return !item.isDiscontinued;
     if (filterStatus === "available")
       return item.isAvailable && !item.isDiscontinued;
     if (filterStatus === "unavailable")
-      return !item.isAvailable || item.isDiscontinued;
+      return !item.isAvailable && !item.isDiscontinued;
+    if (filterStatus === "discontinued")
+      return item.isDiscontinued;
     return true;
   });
 
@@ -111,7 +120,7 @@ const RestaurantMenu = () => {
     <div className="overflow-y-auto h-full p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Restaurant Menu</h2>
+        <h2 className="text-2xl font-bold py-2">Restaurant Menu</h2>
         {filteredItems.length !== 0 && (
           <button
             onClick={handleAddItem}
@@ -132,7 +141,7 @@ const RestaurantMenu = () => {
               : "text-(--color-neutral)"
           }`}
         >
-          All Items ({menuItems.length})
+          All Items ({menuItems.filter((item) => !item.isDiscontinued).length})
         </button>
         <button
           onClick={() => setFilterStatus("available")}
@@ -157,9 +166,24 @@ const RestaurantMenu = () => {
               : "text-(--color-neutral)"
           }`}
         >
-          Unavailable/Discontinued (
+          Unavailable (
           {
-            menuItems.filter((item) => !item.isAvailable || item.isDiscontinued)
+            menuItems.filter((item) => !item.isAvailable && !item.isDiscontinued)
+              .length
+          }
+          )
+        </button>
+        <button
+          onClick={() => setFilterStatus("discontinued")}
+          className={`px-4 py-2 font-semibold transition ${
+            filterStatus === "discontinued"
+              ? "border-b-2 border-(--color-error) text-(--color-error)"
+              : "text-(--color-neutral)"
+          }`}
+        >
+          Discontinued (
+          {
+            menuItems.filter((item) => item.isDiscontinued)
               .length
           }
           )
@@ -218,7 +242,7 @@ const RestaurantMenu = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-1 bg-(--color-accent) text-(--color-accent-content) text-xs font-semibold rounded capitalize">
+                    <span className="px-2 py-1 font-semibold rounded capitalize">
                       {item.foodType}
                     </span>
                   </td>
@@ -240,15 +264,20 @@ const RestaurantMenu = () => {
                         onClick={() =>
                           handleToggleAvailability(item._id, item.isAvailable)
                         }
+                        disabled={item.isDiscontinued}
                         className={`p-2 rounded transition ${
-                          item.isAvailable
-                            ? "bg-(--color-success) text-(--color-success-content) hover:opacity-80"
-                            : "bg-(--color-warning) text-(--color-warning-content) hover:opacity-80"
+                          item.isDiscontinued
+                            ? "bg-(--color-base-300) text-(--color-secondary) cursor-not-allowed opacity-50"
+                            : item.isAvailable
+                              ? "bg-(--color-success) text-(--color-success-content) hover:opacity-80 cursor-pointer"
+                              : "bg-(--color-warning) text-(--color-warning-content) hover:opacity-80 cursor-pointer"
                         }`}
                         title={
-                          item.isAvailable
-                            ? "Mark Unavailable"
-                            : "Mark Available"
+                          item.isDiscontinued
+                            ? "Cannot change availability for discontinued items"
+                            : item.isAvailable
+                              ? "Mark Unavailable"
+                              : "Mark Available"
                         }
                       >
                         {item.isAvailable ? (
@@ -262,24 +291,6 @@ const RestaurantMenu = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() =>
-                          handleToggleDiscontinued(
-                            item._id,
-                            item.isDiscontinued,
-                          )
-                        }
-                        className={`px-3 py-1 text-xs font-semibold rounded transition ${
-                          item.isDiscontinued
-                            ? "bg-(--color-info) text-(--color-info-content) hover:opacity-80"
-                            : "border border-(--color-secondary) text-(--color-neutral) hover:bg-(--color-base-200)"
-                        }`}
-                        title={
-                          item.isDiscontinued ? "Mark as Active" : "Discontinue"
-                        }
-                      >
-                        {item.isDiscontinued ? "Active" : "Discontinue"}
-                      </button>
-                      <button
                         onClick={() => handleEditItem(item)}
                         className="p-2 bg-(--color-primary) text-(--color-primary-content) rounded hover:opacity-80 transition cursor-pointer"
                         title="Edit"
@@ -287,11 +298,19 @@ const RestaurantMenu = () => {
                         <FaEdit />
                       </button>
                       <button
-                        onClick={() => handleDeleteItem(item._id)}
-                        className="p-2 bg-(--color-error) text-(--color-error-content) rounded hover:opacity-80 transition cursor-pointer"
-                        title="Delete"
+                        onClick={() => handleDeleteItem(item._id, item.isDiscontinued)}
+                        className={`p-2 rounded hover:opacity-80 transition cursor-pointer ${
+                          item.isDiscontinued
+                            ? "bg-(--color-success) text-(--color-success-content)"
+                            : "bg-(--color-error) text-(--color-error-content)"
+                        }`}
+                        title={item.isDiscontinued ? "Activate" : "Discontinue"}
                       >
-                        <FaTrash />
+                        {item.isDiscontinued ? (
+                          <FaArrowRotateLeft />
+                        ) : (
+                          <FaTrash />
+                        )}
                       </button>
                     </div>
                   </td>
