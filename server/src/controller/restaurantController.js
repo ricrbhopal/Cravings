@@ -1,9 +1,14 @@
 import Restaurant from "../model/restaurantModel.js";
+import {
+  uploadMultipleImages,
+  deleteMultipleImages,
+} from "../utils/imageUploader.js";
 
 export const createRestaurant = async (req, res, next) => {
   try {
     const userId = req.user._id;
     let restaurantData = req.body;
+    const files = req.files;
 
     // Parse nested JSON strings if they exist (from FormData submission)
     if (typeof restaurantData.geolocation === 'string') {
@@ -26,10 +31,23 @@ export const createRestaurant = async (req, res, next) => {
       return next(error);
     }
 
-    // Create new restaurant
+    // Handle bulk image upload
+    let uploadedImages = [];
+    if (files && files.length > 0) {
+      const cloudinaryFolder = `restaurants/${userId}`;
+      const imageBuffers = files.map((file) => file.buffer);
+      const base64Images = imageBuffers.map((buffer) =>
+        buffer.toString("base64"),
+      );
+      
+      uploadedImages = await uploadMultipleImages(base64Images, cloudinaryFolder);
+    }
+
+    // Create new restaurant with uploaded images
     const newRestaurant = new Restaurant({
       userId,
       ...restaurantData,
+      images: uploadedImages,
       isProfileComplete: true,
     });
 
@@ -67,6 +85,7 @@ export const updateRestaurant = async (req, res, next) => {
   try {
     const userId = req.user._id;
     let updates = req.body;
+    const files = req.files;
 
     // Parse nested JSON strings if they exist (from FormData submission)
     if (typeof updates.geolocation === 'string') {
@@ -79,20 +98,47 @@ export const updateRestaurant = async (req, res, next) => {
       updates.bankingDetails = JSON.parse(updates.bankingDetails);
     }
 
-    const restaurant = await Restaurant.findOneAndUpdate({ userId }, updates, {
-      new: true,
-      runValidators: true,
-    });
-
+    // Get existing restaurant
+    const restaurant = await Restaurant.findOne({ userId });
     if (!restaurant) {
       const error = new Error("Restaurant not found for this user");
       error.status = 404;
       return next(error);
     }
 
+    // Handle image updates: delete old images and upload new ones
+    if (files && files.length > 0) {
+      // Delete all previous images from Cloudinary
+      if (restaurant.images && restaurant.images.length > 0) {
+        const publicIds = restaurant.images.map((img) => img.publicId);
+        try {
+          await deleteMultipleImages(publicIds);
+        } catch (deleteError) {
+          console.error("Error deleting previous images:", deleteError);
+          // Continue with update even if deletion fails
+        }
+      }
+
+      // Upload new images
+      const cloudinaryFolder = `restaurants/${userId}`;
+      const imageBuffers = files.map((file) => file.buffer);
+      const base64Images = imageBuffers.map((buffer) =>
+        buffer.toString("base64"),
+      );
+      
+      const uploadedImages = await uploadMultipleImages(base64Images, cloudinaryFolder);
+      updates.images = uploadedImages;
+    }
+
+    // Update restaurant
+    const updatedRestaurant = await Restaurant.findOneAndUpdate({ userId }, updates, {
+      new: true,
+      runValidators: true,
+    });
+
     res.status(200).json({
       message: "Restaurant updated successfully",
-      data: restaurant,
+      data: updatedRestaurant,
     });
   } catch (error) {
     next(error);

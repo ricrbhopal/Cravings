@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../config/ApiConfig";
 import toast from "react-hot-toast";
+import { FaCamera } from "react-icons/fa";
 
 const EditRestaurantModal = ({
   isOpen,
@@ -97,7 +98,10 @@ const EditRestaurantModal = ({
         });
       }
 
-      const response = await api.put(`/restaurant/update-restaurant`, formDataToSend);
+      const response = await api.put(
+        `/restaurant/update-restaurant`,
+        formDataToSend,
+      );
       toast.success("Restaurant updated successfully!");
       onSuccess();
       onClose();
@@ -298,8 +302,9 @@ const EditRestaurantModal = ({
             <h3 className="font-semibold text-lg">Restaurant Images</h3>
 
             {/* Upload Images */}
-            <label className="block cursor-pointer w-full px-3 py-2 border border-(--color-secondary) rounded text-center hover:bg-(--color-base-200)">
-              📸 Replace Images
+            <label className="cursor-pointer flex items-center justify-center w-full px-3 py-2 border border-(--color-secondary) rounded hover:bg-(--color-base-200)">
+              <FaCamera className="inline-block mr-2" />{" "}
+              <span>Replace Images</span>
               <input
                 type="file"
                 multiple
@@ -319,7 +324,7 @@ const EditRestaurantModal = ({
                       <img
                         src={img.preview || img.URL}
                         alt={`${idx + 1}`}
-                        className="w-full h-32 object-cover rounded"
+                        className="w-full h-64 object-contain rounded"
                       />
                       <button
                         onClick={() => removeImage(idx)}

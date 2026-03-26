@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logoLight from "../assets/transparentLogoLight.png";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext";
 import { FaPowerOff } from "react-icons/fa";
 import toast from "react-hot-toast";
 import api from "../config/ApiConfig";
@@ -63,7 +63,7 @@ const Navbar = () => {
               <img
                 src={user?.photo?.url}
                 alt={user?.fullName}
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full object-cover object-top"
               />
               <span className="text-base">{user?.fullName}</span>
             </button>
