@@ -10,7 +10,8 @@ import CustomerDashboard from "./pages/dashboard/CustomerDashboard";
 import RestaurantDashboard from "./pages/dashboard/RestaurantDashboard";
 import RiderDashboard from "./pages/dashboard/RiderDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
-import OrderNow from "./pages/OrderNow";
+import OrderNow from "./pages/orderProcess/OrderNow";
+import RestaurantMenu from "./pages/orderProcess/RestaurantMenu";
 import TermsAndConditions from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SiteMap from "./pages/SiteMap";
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/order-now" element={<OrderNow />} />
+        <Route path="/restaurant-menu/:restaurantId" element={<RestaurantMenu />} />
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/site-map" element={<SiteMap />} />

@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  IoSearch,
-  IoLocationSharp,
-  IoStar,
-  IoTimer,
-  IoCart,
-} from "react-icons/io5";
+import { IoSearch, IoStar } from "react-icons/io5";
 import {
   MdRestaurant,
   MdLocalDining,
@@ -14,15 +8,13 @@ import {
   MdCake,
   MdLunchDining,
 } from "react-icons/md";
-import MapLocationPicker from "../components/MapLocationPicker";
 import CarouselComponent from "../components/CarouselComponent";
 import { useAuth } from "../context/AuthContext";
+import api from "../config/ApiConfig";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [restaurants, setRestaurants] = useState([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
@@ -37,106 +29,40 @@ const Home = () => {
     { id: "others", label: "Others", icon: MdLunchDining },
   ];
 
-  // Load mock restaurant data
+  // Load restaurants from API
   useEffect(() => {
     const loadRestaurants = async () => {
       try {
         setLoading(true);
-        // Mock data - in production, this would come from API
-        const mockRestaurants = [
-          {
-            id: 1,
-            name: "Pizza Palace",
-            description: "Authentic Italian pizzas and pasta",
-            rating: 4.5,
-            deliveryTime: "30-45 min",
-            deliveryFee: "₹2.99",
-            image: "https://placehold.co/300x200?text=Pizza+Palace",
-            cuisines: ["Italian", "Pizza"],
-            items: [
-              {
-                itemName: "Margherita Pizza",
-                price: 12.99,
-                category: "nonveg",
-              },
-              { itemName: "Vegetarian Pizza", price: 11.99, category: "veg" },
-            ],
-          },
-          {
-            id: 2,
-            name: "The Veggie Hub",
-            description: "Fresh vegetables and healthy options",
-            rating: 4.7,
-            deliveryTime: "20-35 min",
-            deliveryFee: "₹1.99",
-            image: "https://placehold.co/300x200?text=Veggie+Hub",
-            cuisines: ["Vegetarian", "Health Food"],
-            items: [
-              { itemName: "Buddha Bowl", price: 9.99, category: "veg" },
-              { itemName: "Salad Mix", price: 8.99, category: "veg" },
-            ],
-          },
-          {
-            id: 3,
-            name: "Sweet Treats Bakery",
-            description: "Delicious desserts and baked goods",
-            rating: 4.8,
-            deliveryTime: "15-25 min",
-            deliveryFee: "₹1.49",
-            image: "https://placehold.co/300x200?text=Sweet+Treats",
-            cuisines: ["Desserts", "Bakery"],
-            items: [
-              { itemName: "Chocolate Cake", price: 6.99, category: "dessert" },
-              { itemName: "Cheesecake", price: 7.99, category: "dessert" },
-            ],
-          },
-          {
-            id: 4,
-            name: "Spice Route",
-            description: "Traditional Indian cuisine with modern twist",
-            rating: 4.6,
-            deliveryTime: "25-40 min",
-            deliveryFee: "₹2.49",
-            image: "https://placehold.co/300x200?text=Spice+Route",
-            cuisines: ["Indian", "Asian"],
-            items: [
-              { itemName: "Butter Chicken", price: 13.99, category: "nonveg" },
-              { itemName: "Paneer Tikka", price: 10.99, category: "veg" },
-            ],
-          },
-          {
-            id: 5,
-            name: "Burger Barn",
-            description: "Juicy burgers and comfort food",
-            rating: 4.4,
-            deliveryTime: "20-30 min",
-            deliveryFee: "₹1.99",
-            image: "https://placehold.co/300x200?text=Burger+Barn",
-            cuisines: ["American", "Burgers"],
-            items: [
-              { itemName: "Classic Burger", price: 11.99, category: "nonveg" },
-              { itemName: "Veggie Burger", price: 9.99, category: "veg" },
-            ],
-          },
-          {
-            id: 6,
-            name: "Noodle Heaven",
-            description: "Asian noodles and stir-fry dishes",
-            rating: 4.5,
-            deliveryTime: "25-35 min",
-            deliveryFee: "₹2.49",
-            image: "https://placehold.co/300x200?text=Noodle+Heaven",
-            cuisines: ["Asian", "Chinese"],
-            items: [
-              { itemName: "Veg Noodles", price: 8.99, category: "veg" },
-              { itemName: "Chicken Noodles", price: 10.99, category: "nonveg" },
-            ],
-          },
-        ];
-        setRestaurants(mockRestaurants);
-        setFilteredRestaurants(mockRestaurants);
+        const response = await api.get("/public/restaurants");
+
+        // Map API response to match component's expected format
+        const formattedRestaurants = response.data.data.map((restaurant) => ({
+          id: restaurant._id,
+          name: restaurant.restaurantName,
+          description:
+            restaurant.description ||
+            `${restaurant.cuisineType} cuisine in ${restaurant.city}`,
+          rating: restaurant.rating || 0,
+          numReviews: restaurant.numReviews || 0,
+          image:
+            restaurant.images?.[0]?.URL ||
+            "https://placehold.co/300x200?text=Restaurant",
+          cuisines: restaurant.cuisineType,
+          geolocation: restaurant.geolocation,
+          city: restaurant.city,
+          address: restaurant.address,
+          openingHours: restaurant.openingHours,
+          closingHours: restaurant.closingHours,
+        }));
+
+        setRestaurants(formattedRestaurants);
+        setFilteredRestaurants(formattedRestaurants);
       } catch (error) {
         console.error("Error loading restaurants:", error);
+        // Fallback to empty state on error
+        setRestaurants([]);
+        setFilteredRestaurants([]);
       } finally {
         setLoading(false);
       }
@@ -156,32 +82,28 @@ const Home = () => {
           r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           r.cuisines.some((c) =>
             c.toLowerCase().includes(searchQuery.toLowerCase()),
-          ),
+          ) ||
+          r.city.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
-    // Filter by category
+    // Filter by category (map to cuisine types)
     if (selectedCategory !== "all") {
+      const categoryMap = {
+        veg: "vegetarian",
+        nonveg: "non-vegetarian",
+        dessert: "desserts",
+        others: "other",
+      };
+
+      const selectedCuisine = categoryMap[selectedCategory];
       filtered = filtered.filter((r) =>
-        r.items.some((item) => item.category === selectedCategory),
+        r.cuisines.some((c) => c.toLowerCase().includes(selectedCuisine)),
       );
     }
 
     setFilteredRestaurants(filtered);
   }, [searchQuery, selectedCategory, restaurants]);
-
-  const handleLocationSelect = (location) => {
-    setSelectedLocation(location);
-    setShowLocationPicker(false);
-  };
-
-  const handleOrderNow = () => {
-    if (!user) {
-      navigate("/login");
-    } else {
-      navigate("/order-now");
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -216,7 +138,7 @@ const Home = () => {
                   Sign Up
                 </button>
                 <button
-                  onClick={handleOrderNow}
+                  onClick={() => navigate("/order-now")}
                   className="bg-(--color-base-100) text-(--color-base-content) px-8 py-3 rounded-lg font-semibold hover:bg-(--color-base-200) transition"
                 >
                   Order Now
@@ -226,72 +148,31 @@ const Home = () => {
           </div>
 
           {/* Search and Location Bar */}
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <div className="flex items-center bg-(--color-base-100) rounded-lg px-4 py-3">
-                  <IoSearch className="text-(--color-base-content) text-xl mr-3" />
-                  <input
-                    type="text"
-                    placeholder="Search restaurants or dishes..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-(--color-base-100) w-full outline-none text-(--color-primary)"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <button
-                  onClick={() => setShowLocationPicker(true)}
-                  className="w-full flex items-center justify-center bg-(--color-base-100) rounded-lg px-4 py-3 hover:bg-(--color-base-200) transition text-(--color-primary)"
-                >
-                  <IoLocationSharp className="text-(--color-primary) text-xl mr-2" />
-                  <span className="text-base">
-                    {selectedLocation
-                      ? `${selectedLocation.lat.toFixed(3)}, ${selectedLocation.lng.toFixed(3)}`
-                      : "Set Location"}
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Category Filter */}
-      <section className="bg-(--color-base-100) border-b border-(--color-base-200) py-2 sticky top-16 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-2 md:gap-4 overflow-x-auto">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full font-medium transition whitespace-nowrap flex items-center gap-2 ${
-                  selectedCategory === category.id
-                    ? "bg-(--color-primary) text-(--color-primary-content)"
-                    : "bg-(--color-base-100) text-(--color-base-content) hover:bg-(--color-base-200)"
-                }`}
-              >
-                <category.icon size={20} />
-                {category.label}
-              </button>
-            ))}
+          <div className="flex items-center bg-(--color-base-100) rounded-lg px-4 py-3 max-w-4xl mx-auto">
+            <IoSearch className="text-(--color-base-content) text-xl mr-3" />
+            <input
+              type="text"
+              placeholder="Search restaurants or dishes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-(--color-base-100) w-full outline-none text-(--color-primary)"
+            />
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-12 md:py-16 bg-linear-to-b from-(--color-primary) to-(--color-primary-content)">
+      <section className="py-4 md:py-8 bg-linear-to-b from-(--color-primary) to-(--color-primary-content)">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Results Header */}
           <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-(--color-content) mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-(--color-primary-content) mb-2">
               {selectedCategory === "all"
                 ? "Featured Restaurants"
                 : `${categories.find((c) => c.id === selectedCategory)?.label} Options`}
             </h2>
-            <p className="text-(--color-base-content)">
+            <p className="text-(--color-primary-content)/70">
               {filteredRestaurants.length} restaurant
               {filteredRestaurants.length !== 1 ? "s" : ""} available
             </p>
@@ -310,8 +191,8 @@ const Home = () => {
               {filteredRestaurants.map((restaurant) => (
                 <div
                   key={restaurant.id}
-                  onClick={() => navigate("/order-now")}
-                  className="bg-(--color-base-100) rounded-xl overflow-hidden shadow-md hover:shadow-xl transition cursor-pointer transform hover:scale-105"
+                  onClick={() => navigate(`/restaurant-menu/${restaurant.id}`)}
+                  className="flex flex-col bg-(--color-base-100) rounded-xl overflow-hidden shadow-md hover:shadow-xl transition cursor-pointer transform hover:scale-105"
                 >
                   {/* Restaurant Image */}
                   <div className="relative h-48 overflow-hidden bg-(--color-base-200)">
@@ -327,7 +208,7 @@ const Home = () => {
                   </div>
 
                   {/* Restaurant Info */}
-                  <div className="p-4">
+                  <div className="flex flex-col flex-1 p-4">
                     <h3 className="font-bold text-(--color-content) text-lg mb-1">
                       {restaurant.name}
                     </h3>
@@ -337,10 +218,10 @@ const Home = () => {
 
                     {/* Cuisines */}
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {restaurant.cuisines.map((cuisine, idx) => (
+                      {restaurant.cuisines.split(",").map((cuisine, idx) => (
                         <span
                           key={idx}
-                          className="text-xs bg-(--color-base-100) text-(--color-base-content) px-2 py-1 rounded"
+                          className="text-xs bg-(--color-base-300) text-(--color-base-content) px-2 py-1 rounded capitalize"
                         >
                           {cuisine}
                         </span>
@@ -348,17 +229,16 @@ const Home = () => {
                     </div>
 
                     {/* Footer Info */}
-                    <div className="flex justify-between items-center pt-3 border-t border-(--color-base-200)">
-                      <div className="text-sm text-(--color-base-content) flex items-center gap-2">
-                        <IoTimer size={18} />
-                        <span className="font-semibold">
-                          {restaurant.deliveryTime}
-                        </span>
-                      </div>
-                      <div className="text-sm text-(--color-base-content) flex items-center gap-2">
-                        <IoCart size={18} />
-                        <span>{restaurant.deliveryFee}</span>
-                      </div>
+                    <div className="mt-auto pt-3 border-t border-(--color-base-200)">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/restaurant-menu/${restaurant.id}`);
+                        }}
+                        className="w-full bg-(--color-primary) text-(--color-primary-content) px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition"
+                      >
+                        Explore Menu
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -483,15 +363,20 @@ const Home = () => {
                 Amazing Service!
               </h3>
               <p className="text-(--color-base-content) mb-4">
-                "The food arrived hot and fresh. The delivery was incredibly fast. Highly impressed with Cravings' service!"
+                "The food arrived hot and fresh. The delivery was incredibly
+                fast. Highly impressed with Cravings' service!"
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-(--color-primary) flex items-center justify-center text-white font-bold">
                   AJ
                 </div>
                 <div>
-                  <p className="font-semibold text-(--color-content)">Arun J.</p>
-                  <p className="text-sm text-(--color-base-content)">Verified Buyer</p>
+                  <p className="font-semibold text-(--color-content)">
+                    Arun J.
+                  </p>
+                  <p className="text-sm text-(--color-base-content)">
+                    Verified Buyer
+                  </p>
                 </div>
               </div>
             </div>
@@ -507,15 +392,20 @@ const Home = () => {
                 Best App Ever!
               </h3>
               <p className="text-(--color-base-content) mb-4">
-                "Easy to use interface, wide variety of restaurants, and quick delivery. I order from Cravings every week!"
+                "Easy to use interface, wide variety of restaurants, and quick
+                delivery. I order from Cravings every week!"
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-(--color-accent) flex items-center justify-center text-white font-bold">
                   SP
                 </div>
                 <div>
-                  <p className="font-semibold text-(--color-content)">Sneha P.</p>
-                  <p className="text-sm text-(--color-base-content)">Verified Buyer</p>
+                  <p className="font-semibold text-(--color-content)">
+                    Sneha P.
+                  </p>
+                  <p className="text-sm text-(--color-base-content)">
+                    Verified Buyer
+                  </p>
                 </div>
               </div>
             </div>
@@ -531,15 +421,20 @@ const Home = () => {
                 Excellent Choices
               </h3>
               <p className="text-(--color-base-content) mb-4">
-                "Love the variety of restaurants available. Found my new favorite spot through Cravings. Definitely worth it!"
+                "Love the variety of restaurants available. Found my new
+                favorite spot through Cravings. Definitely worth it!"
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-(--color-primary) flex items-center justify-center text-white font-bold">
                   RK
                 </div>
                 <div>
-                  <p className="font-semibold text-(--color-content)">Raj Kumar</p>
-                  <p className="text-sm text-(--color-base-content)">Verified Buyer</p>
+                  <p className="font-semibold text-(--color-content)">
+                    Raj Kumar
+                  </p>
+                  <p className="text-sm text-(--color-base-content)">
+                    Verified Buyer
+                  </p>
                 </div>
               </div>
             </div>
@@ -565,14 +460,6 @@ const Home = () => {
           </button>
         </div>
       </section>
-
-      {/* Location Picker Modal */}
-      {showLocationPicker && (
-        <MapLocationPicker
-          onClose={() => setShowLocationPicker(false)}
-          onSelectLocation={handleLocationSelect}
-        />
-      )}
     </div>
   );
 };

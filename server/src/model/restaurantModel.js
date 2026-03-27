@@ -11,6 +11,10 @@ const restaurantSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+      required: true,
+    },
     address: {
       type: String,
       required: true,
@@ -100,6 +104,16 @@ const restaurantSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    numReviews: {
+      type: Number,
+      default: 0,
     },
   },
   {

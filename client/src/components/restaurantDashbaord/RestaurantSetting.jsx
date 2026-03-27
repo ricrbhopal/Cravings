@@ -593,7 +593,7 @@ const RestaurantSetting = () => {
         {/* Basic Information */}
         <div className="bg-(--color-base-200) rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-6 mb-6">
             <div className="bg-(--color-base-100) p-4 rounded">
               <p className="text-sm text-(--color-neutral) mb-1">Restaurant</p>
               <p className="font-semibold text-lg">
@@ -606,6 +606,12 @@ const RestaurantSetting = () => {
               </p>
               <p className="font-semibold">{restaurantData.cuisineType}</p>
             </div>
+          </div>
+          <div className="bg-(--color-base-100) p-4 rounded">
+            <p className="text-sm text-(--color-neutral) mb-2">Description</p>
+            <p className="font-semibold text-base leading-relaxed">
+              {restaurantData.description || "No description provided"}
+            </p>
           </div>
         </div>
 

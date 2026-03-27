@@ -11,7 +11,7 @@ export const createRestaurant = async (req, res, next) => {
     const files = req.files;
 
     // Parse nested JSON strings if they exist (from FormData submission)
-    if (typeof restaurantData.geolocation === 'string') {
+    if (typeof restaurantData.geolocation === "string") {
       try {
         restaurantData.geolocation = JSON.parse(restaurantData.geolocation);
       } catch (parseError) {
@@ -21,7 +21,7 @@ export const createRestaurant = async (req, res, next) => {
         return next(error);
       }
     }
-    
+
     // Ensure geolocation has proper lat/lng values as numbers
     if (restaurantData.geolocation) {
       restaurantData.geolocation = {
@@ -29,11 +29,11 @@ export const createRestaurant = async (req, res, next) => {
         lng: parseFloat(restaurantData.geolocation.lng),
       };
     }
-    
-    if (typeof restaurantData.licence === 'string') {
+
+    if (typeof restaurantData.licence === "string") {
       restaurantData.licence = JSON.parse(restaurantData.licence);
     }
-    if (typeof restaurantData.bankingDetails === 'string') {
+    if (typeof restaurantData.bankingDetails === "string") {
       restaurantData.bankingDetails = JSON.parse(restaurantData.bankingDetails);
     }
 
@@ -55,8 +55,11 @@ export const createRestaurant = async (req, res, next) => {
       const base64Images = imageBuffers.map((buffer) =>
         buffer.toString("base64"),
       );
-      
-      uploadedImages = await uploadMultipleImages(base64Images, cloudinaryFolder);
+
+      uploadedImages = await uploadMultipleImages(
+        base64Images,
+        cloudinaryFolder,
+      );
     }
 
     // Create new restaurant with uploaded images
@@ -104,7 +107,7 @@ export const updateRestaurant = async (req, res, next) => {
     const files = req.files;
 
     // Parse nested JSON strings if they exist (from FormData submission)
-    if (typeof updates.geolocation === 'string') {
+    if (typeof updates.geolocation === "string") {
       try {
         updates.geolocation = JSON.parse(updates.geolocation);
       } catch (parseError) {
@@ -114,7 +117,7 @@ export const updateRestaurant = async (req, res, next) => {
         return next(error);
       }
     }
-    
+
     // Ensure geolocation has proper lat/lng values as numbers
     if (updates.geolocation) {
       updates.geolocation = {
@@ -122,11 +125,11 @@ export const updateRestaurant = async (req, res, next) => {
         lng: parseFloat(updates.geolocation.lng),
       };
     }
-    
-    if (typeof updates.licence === 'string') {
+
+    if (typeof updates.licence === "string") {
       updates.licence = JSON.parse(updates.licence);
     }
-    if (typeof updates.bankingDetails === 'string') {
+    if (typeof updates.bankingDetails === "string") {
       updates.bankingDetails = JSON.parse(updates.bankingDetails);
     }
 
@@ -157,20 +160,69 @@ export const updateRestaurant = async (req, res, next) => {
       const base64Images = imageBuffers.map((buffer) =>
         buffer.toString("base64"),
       );
-      
-      const uploadedImages = await uploadMultipleImages(base64Images, cloudinaryFolder);
+
+      const uploadedImages = await uploadMultipleImages(
+        base64Images,
+        cloudinaryFolder,
+      );
       updates.images = uploadedImages;
     }
 
     // Update restaurant
-    const updatedRestaurant = await Restaurant.findOneAndUpdate({ userId }, updates, {
-      returnDocument: 'after',
-      runValidators: true,
-    });
+    const updatedRestaurant = await Restaurant.findOneAndUpdate(
+      { userId },
+      updates,
+      {
+        returnDocument: "after",
+        runValidators: true,
+      },
+    );
 
     res.status(200).json({
       message: "Restaurant updated successfully",
       data: updatedRestaurant,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Public endpoints - No authentication required
+export const getAllRestaurants = async (req, res, next) => {
+  try {
+    const restaurants = await Restaurant.find()
+      .select(
+        "restaurantName address city state cuisineType images openingHours closingHours geolocation rating numReviews description",
+      )
+      .populate("userId", "email contactNumber");
+
+    res.status(200).json({
+      message: "All restaurants retrieved successfully",
+      data: restaurants,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRestaurantById = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params;
+
+    const restaurant = await Restaurant.findById(restaurantId).populate(
+      "userId",
+      "email contactNumber fullName",
+    );
+
+    if (!restaurant) {
+      const error = new Error("Restaurant not found");
+      error.status = 404;
+      return next(error);
+    }
+
+    res.status(200).json({
+      message: "Restaurant retrieved successfully",
+      data: restaurant,
     });
   } catch (error) {
     next(error);

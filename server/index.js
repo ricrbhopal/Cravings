@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import { connectDB } from "./src/config/dbConnection.js";
+import connectDB from "./src/config/dbConnection.js";
 import cloudinary from "./src/config/cloudinaryConfig.js";
 
 import authRouter from "./src/router/authRouter.js";
@@ -10,6 +10,7 @@ import restaurantRouter from "./src/router/restaurantRouter.js";
 import customerRouter from "./src/router/customerRouter.js";
 import riderRouter from "./src/router/riderRouter.js";
 import menuRouter from "./src/router/menuRouter.js";
+import publicRouter from "./src/router/publicRouter.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/restaurant", restaurantRouter);
 app.use("/customer", customerRouter);
 app.use("/rider", riderRouter);
 app.use("/menu", menuRouter);
+app.use("/public", publicRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello, World!");

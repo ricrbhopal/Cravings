@@ -15,6 +15,7 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
     phone: user?.phone || "",
     restaurantName: "",
     cuisineType: "",
+    description: "",
     address: "",
     city: "",
     state: "",
@@ -82,6 +83,7 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
       if (
         !formData.restaurantName ||
         !formData.cuisineType ||
+        !formData.description ||
         !formData.address ||
         !formData.city ||
         !formData.state ||
@@ -109,6 +111,7 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
       formDataToSend.append("phone", formData.phone);
       formDataToSend.append("restaurantName", formData.restaurantName);
       formDataToSend.append("cuisineType", formData.cuisineType);
+      formDataToSend.append("description", formData.description);
       formDataToSend.append("address", formData.address);
       formDataToSend.append("city", formData.city);
       formDataToSend.append("state", formData.state);
@@ -194,6 +197,19 @@ const AddRestaurantModal = ({ isOpen, onClose, onSuccess }) => {
                   className="w-full px-3 py-2 border border-(--color-secondary) rounded"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Brief description of your restaurant (e.g., specialty dishes, ambiance, etc.)"
+                rows="3"
+                className="w-full px-3 py-2 border border-(--color-secondary) rounded resize-none"
+              />
             </div>
           </div>
 

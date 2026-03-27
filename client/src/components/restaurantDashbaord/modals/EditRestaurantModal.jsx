@@ -81,6 +81,7 @@ const EditRestaurantModal = ({
       // Add all edit data fields
       formDataToSend.append("restaurantName", editData.restaurantName || "");
       formDataToSend.append("cuisineType", editData.cuisineType || "");
+      formDataToSend.append("description", editData.description || "");
       formDataToSend.append("address", editData.address || "");
       formDataToSend.append("city", editData.city || "");
       formDataToSend.append("state", editData.state || "");
@@ -168,6 +169,19 @@ const EditRestaurantModal = ({
                   className="w-full px-3 py-2 border border-(--color-secondary) rounded"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-1">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={editData.description || ""}
+                onChange={handleChange}
+                placeholder="Brief description of your restaurant"
+                rows="3"
+                className="w-full px-3 py-2 border border-(--color-secondary) rounded resize-none"
+              />
             </div>
           </div>
 
