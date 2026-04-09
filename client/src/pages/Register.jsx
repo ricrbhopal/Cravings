@@ -122,9 +122,6 @@ const Register = () => {
         <form onSubmit={handleSubmit}>
           {/* Full Name */}
           <div className="mb-4">
-            <label className="block text-(--color-neutral) font-semibold mb-2">
-              Full Name
-            </label>
             <input
               type="text"
               name="fullName"
@@ -146,9 +143,7 @@ const Register = () => {
 
           {/* Email */}
           <div className="mb-4">
-            <label className="block text-(--color-neutral) font-semibold mb-2">
-              Email
-            </label>
+            
             <input
               type="email"
               name="email"
@@ -170,9 +165,7 @@ const Register = () => {
 
           {/* Phone */}
           <div className="mb-4">
-            <label className="block text-(--color-neutral) font-semibold mb-2">
-              Phone Number
-            </label>
+           
             <input
               type="number"
               name="phone"
@@ -194,9 +187,7 @@ const Register = () => {
 
           {/* Password */}
           <div className="mb-4">
-            <label className="block text-(--color-neutral) font-semibold mb-2">
-              Password
-            </label>
+          
             <input
               type="password"
               name="password"
@@ -218,9 +209,6 @@ const Register = () => {
 
           {/* Confirm Password */}
           <div className="mb-6">
-            <label className="block text-(--color-neutral) font-semibold mb-2">
-              Confirm Password
-            </label>
             <input
               type="text"
               name="confirmPassword"
