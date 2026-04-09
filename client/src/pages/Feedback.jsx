@@ -58,7 +58,7 @@ const Feedback = () => {
 
   return (
     <div
-      className="h-[90vh] flex items-center justify-end bg-[url('FeedbackPage.jpeg')] bg-cover bg-center p-10 md:pe-30"
+      className="h-[90vh] flex items-center justify-end bg-[url('/FeedbackPage.jpeg')] bg-cover bg-center p-10 md:pe-30"
     >
       <div className="bg-white rounded-lg shadow-md px-10 py-6 max-w-md w-full overflow-y-auto max-h-[85vh]">
         <h1 className="text-3xl font-bold text-(--color-primary) mb-2 text-center">
