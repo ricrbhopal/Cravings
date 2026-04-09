@@ -14,7 +14,12 @@ import publicRouter from "./src/router/publicRouter.js";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://cravings.ricr.in"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
