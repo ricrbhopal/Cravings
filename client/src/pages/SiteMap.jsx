@@ -56,7 +56,7 @@ const SiteMap = () => {
     <div className="bg-(--color-base-100)">
 
       {/* Hero */}
-      <section className="relative h-[40vh] flex items-center justify-center bg-[url('/sitemap-bg.jpg')] bg-cover bg-center">
+      <section className="relative h-[40vh] flex items-center justify-center bg-[url('/commonBG.avif')] bg-cover bg-center">
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-6">
           <FaMap className="text-5xl text-(--color-primary) mx-auto mb-4" />
@@ -98,10 +98,10 @@ const SiteMap = () => {
       </section>
 
       {/* Footer note */}
-      <section className="bg-(--color-neutral) py-10 px-6 text-center">
+      <section className="bg-(--color-primary) py-10 px-6 text-center">
         <p className="text-(--color-neutral-content)/60 text-sm">
           Can't find what you're looking for?{" "}
-          <Link to="/help-center" className="text-(--color-primary) hover:underline font-medium">
+          <Link to="/help-center" className="text-(--color-neutral-content) hover:underline font-medium">
             Visit our Help Center
           </Link>
           .

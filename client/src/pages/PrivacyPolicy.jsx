@@ -109,7 +109,7 @@ const PrivacyPolicy = () => {
     <div className="bg-(--color-base-100)">
 
       {/* Hero */}
-      <section className="relative h-[45vh] flex items-center justify-center bg-[url('/privacy-bg.jpg')] bg-cover bg-center">
+      <section className="relative h-[45vh] flex items-center justify-center bg-[url('/commonBG.avif')] bg-cover bg-center">
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-6">
           <FaShieldAlt className="text-5xl text-(--color-primary) mx-auto mb-4" />
@@ -145,8 +145,8 @@ const PrivacyPolicy = () => {
       </section>
 
       {/* Contact */}
-      <section className="bg-(--color-neutral) py-12 px-6 text-center">
-        <FaEnvelope className="text-3xl text-(--color-primary) mx-auto mb-3" />
+      <section className="bg-(--color-primary) py-12 px-6 text-center">
+        <FaEnvelope className="text-3xl text-(--color-neutral-content) mx-auto mb-3" />
         <h2 className="text-2xl font-bold text-(--color-neutral-content) mb-2">Questions about your privacy?</h2>
         <p className="text-(--color-neutral-content)/70 mb-4 text-sm max-w-md mx-auto">
           Reach out to our Data Protection team and we'll respond within 2 business days.

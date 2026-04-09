@@ -102,7 +102,9 @@ const AccordionItem = ({ term, isOpen, onToggle }) => (
     >
       <span className="flex items-center gap-3">
         {term.icon}
-        <span className="font-semibold text-(--color-neutral)">{term.title}</span>
+        <span className="font-semibold text-(--color-neutral)">
+          {term.title}
+        </span>
       </span>
       {isOpen ? (
         <FaChevronUp className="text-(--color-secondary) shrink-0" />
@@ -114,7 +116,10 @@ const AccordionItem = ({ term, isOpen, onToggle }) => (
       <div className="px-6 py-4 bg-white border-t border-(--color-base-300)">
         <ul className="space-y-2">
           {term.content.map((item, i) => (
-            <li key={i} className="flex gap-2 text-(--color-secondary) text-sm leading-relaxed">
+            <li
+              key={i}
+              className="flex gap-2 text-(--color-secondary) text-sm leading-relaxed"
+            >
               <span className="text-(--color-primary) mt-1 shrink-0">•</span>
               {item}
             </li>
@@ -132,9 +137,8 @@ const TermsOfService = () => {
 
   return (
     <div className="bg-(--color-base-100)">
-
       {/* Hero */}
-      <section className="relative h-[45vh] flex items-center justify-center bg-[url('/terms-bg.jpg')] bg-cover bg-center">
+      <section className="relative h-[45vh] flex items-center justify-center bg-[url('/commonBG.avif')] bg-cover bg-center">
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative z-10 text-center px-6">
           <FaFileContract className="text-5xl text-(--color-primary) mx-auto mb-4" />
@@ -142,9 +146,12 @@ const TermsOfService = () => {
             Terms of <span className="text-(--color-primary)">Service</span>
           </h1>
           <p className="text-white/75 text-base max-w-xl mx-auto">
-            Please read these terms carefully before using the Cravings platform.
+            Please read these terms carefully before using the Cravings
+            platform.
           </p>
-          <p className="text-white/50 text-sm mt-3">Last updated: April 9, 2026</p>
+          <p className="text-white/50 text-sm mt-3">
+            Last updated: April 9, 2026
+          </p>
         </div>
       </section>
 
@@ -152,9 +159,10 @@ const TermsOfService = () => {
       <section className="max-w-3xl mx-auto px-6 py-12 text-center">
         <p className="text-(--color-secondary) leading-relaxed text-base">
           These Terms of Service ("Terms") govern your access to and use of the{" "}
-          <strong className="text-(--color-neutral)">Cravings</strong> platform, including our website and
-          mobile applications. By creating an account or placing an order, you agree to be bound by these
-          Terms. If you do not agree, please do not use our services.
+          <strong className="text-(--color-neutral)">Cravings</strong> platform,
+          including our website and mobile applications. By creating an account
+          or placing an order, you agree to be bound by these Terms. If you do
+          not agree, please do not use our services.
         </p>
       </section>
 
@@ -174,7 +182,10 @@ const TermsOfService = () => {
       <section className="max-w-3xl mx-auto px-6 pb-12 text-center">
         <p className="text-(--color-secondary) text-sm">
           Your use of Cravings is also governed by our{" "}
-          <Link to="/privacy-policy" className="text-(--color-primary) hover:underline font-medium">
+          <Link
+            to="/privacy-policy"
+            className="text-(--color-primary) hover:underline font-medium"
+          >
             Privacy Policy
           </Link>
           , which is incorporated into these Terms by reference.
@@ -182,11 +193,14 @@ const TermsOfService = () => {
       </section>
 
       {/* Contact CTA */}
-      <section className="bg-(--color-neutral) py-12 px-6 text-center">
-        <FaEnvelope className="text-3xl text-(--color-primary) mx-auto mb-3" />
-        <h2 className="text-2xl font-bold text-(--color-neutral-content) mb-2">Have questions about our Terms?</h2>
+      <section className="bg-(--color-primary) py-12 px-6 text-center">
+        <FaEnvelope className="text-3xl text-(--color-neutral-content) mx-auto mb-3" />
+        <h2 className="text-2xl font-bold text-(--color-neutral-content) mb-2">
+          Have questions about our Terms?
+        </h2>
         <p className="text-(--color-neutral-content)/70 mb-4 text-sm max-w-md mx-auto">
-          Our legal team is happy to help. Send us an email and we'll get back to you within 2 business days.
+          Our legal team is happy to help. Send us an email and we'll get back
+          to you within 2 business days.
         </p>
         <a
           href="mailto:contact@cravings.com"
@@ -195,7 +209,6 @@ const TermsOfService = () => {
           contact@cravings.com
         </a>
       </section>
-
     </div>
   );
 };
